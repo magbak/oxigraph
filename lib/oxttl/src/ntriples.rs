@@ -216,7 +216,7 @@ impl NTriplesParser {
     ) -> Vec<FromSliceNTriplesReader<'a>> {
         #[allow(clippy::decimal_literal_representation)]
         let n_chunks = (slice.len() / 16384).clamp(1, target_parallelism);
-        let chunks = get_ntriples_file_chunks(slice, n_chunks, self.clone());
+        let chunks = get_ntriples_file_chunks(slice, n_chunks);
         let from_ntriples_slice_readers: Vec<_> = chunks
             .into_iter()
             .map(|(start, end)| {
