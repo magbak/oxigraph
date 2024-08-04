@@ -23,11 +23,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::{TurtleParser};
+use crate::TurtleParser;
 
 const PERIOD_CHAR: u8 = b'.';
 const NEWLINE_CHAR: u8 = b'\n';
-const ESCAPE_CHAR: u8 = b'\\';
 
 // Given a number of desired chunks, corresponding to threads find offsets that break the file into chunks that can be read in parallel.
 // Parser should not be reused, hence it is passed by value.
@@ -43,7 +42,7 @@ pub fn get_ntriples_file_chunks(bytes: &[u8], n_chunks: usize) -> Vec<(usize, us
             break;
         }
 
-        let end_pos = match next_unescaped_newline(&bytes[search_pos..]) {
+        let end_pos = match next_newline_position(&bytes[search_pos..]) {
             Some(pos) => search_pos + pos,
             None => {
                 // We keep the valid chunks we found, and add (outside the loop) the rest of the bytes as a chunk.
@@ -61,22 +60,8 @@ pub fn get_ntriples_file_chunks(bytes: &[u8], n_chunks: usize) -> Vec<(usize, us
 
 // Finds the first newline in input that is preceded by something that is not an escape char.
 // Such newlines split the triples in the NTriples format.
-fn next_unescaped_newline(mut input: &[u8]) -> Option<usize> {
-    let mut total_pos = 0;
-    for _ in 0..1_000 {
-        let pos = memchr::memchr(NEWLINE_CHAR, input)? + 1;
-        if input.len() - pos == 0 {
-            return None;
-        }
-        //Check that found newline is not escaped.
-        let accepted = pos != 0 && input[pos - 1] != ESCAPE_CHAR;
-        if accepted {
-            return Some(total_pos + pos);
-        }
-        input = &input[pos + 1..];
-        total_pos += pos + 1;
-    }
-    None
+fn next_newline_position(input: &[u8]) -> Option<usize> {
+    Some(memchr::memchr(NEWLINE_CHAR, input)? + 1)
 }
 
 // Given a number of desired chunks, corresponding to threads find offsets that break the file into chunks that can be read in parallel.
